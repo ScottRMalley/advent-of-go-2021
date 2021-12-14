@@ -41,16 +41,66 @@ func NewDay(fname string) *Day {
 }
 
 func (d *Day) RunPart1() {
-	for i := 0; i < 10; i++ {
-		d.step()
-	}
-	result := getResult(d.data.template)
-	fmt.Printf("Part 1: %d\n", result)
+	fmt.Printf("Part 1: %d\n", getResult(d.step(d.data.template, 10)))
 }
 
-func (d *Day) step() {
-	pairs := getPairs(d.data.template)
-	d.data.template = d.insertReplacements(pairs)
+func (d *Day) RunPart2() {
+	fmt.Printf("Part 2: %d\n", getResult(d.step(d.data.template, 40)))
+}
+
+var cache map[string]map[rune]int
+
+func withCaching(pair string, nsteps int, result map[rune]int) map[rune]int {
+	if cache == nil {
+		cache = make(map[string]map[rune]int)
+	}
+	sig := fmt.Sprintf("%s%d", pair, nsteps)
+	cache[sig] = result
+	return result
+}
+
+func getFromCache(pair string, nsteps int) (map[rune]int, bool) {
+	if cache == nil {
+		cache = make(map[string]map[rune]int)
+	}
+	sig := fmt.Sprintf("%s%d", pair, nsteps)
+	if val, ok := cache[sig]; !ok {
+		return nil, false
+	} else {
+		return val, true
+	}
+}
+
+func (d *Day) stepPair(pair string, nsteps int) map[rune]int {
+	if val, ok := getFromCache(pair, nsteps); ok {
+		return val
+	}
+	if nsteps == 0 {
+		return withCaching(pair, nsteps, utils.CountUniqueRunes(pair))
+	} else {
+		pair1 := string(pair[0]) + d.data.replacements[pair]
+		pair2 := d.data.replacements[pair] + string(pair[1])
+		return withCaching(
+			pair,
+			nsteps,
+			combineCounts(d.stepPair(pair1, nsteps-1), d.stepPair(pair2, nsteps-1),
+				rune(d.data.replacements[pair][0])),
+		)
+	}
+}
+
+func (d *Day) step(template string, nsteps int) map[rune]int {
+	var sumCounts map[rune]int
+	pairs := getPairs(template)
+	for i, pair := range pairs {
+		counts := d.stepPair(pair, nsteps)
+		if i == 0 {
+			sumCounts = counts
+		} else {
+			sumCounts = combineCounts(sumCounts, counts, rune(pair[0]))
+		}
+	}
+	return sumCounts
 }
 
 func getPairs(s string) []string {
@@ -61,8 +111,7 @@ func getPairs(s string) []string {
 	return out
 }
 
-func getResult(s string) int {
-	counts := utils.CountUniqueRunes(s)
+func getResult(counts map[rune]int) int {
 	max := 0
 	min := -1
 	for _, v := range counts {
@@ -91,12 +140,24 @@ func (d *Day) insertReplacements(pairs []string) string {
 	return out
 }
 
-func (d *Day) RunPart2() {
-	for i := 0; i < 30; i++ {
-		d.step()
+func combineCounts(c1, c2 map[rune]int, common rune) map[rune]int {
+	out := make(map[rune]int)
+	for k, v := range c1 {
+		if val, ok := out[k]; !ok {
+			out[k] = v
+		} else {
+			out[k] = val + v
+		}
 	}
-	result := getResult(d.data.template)
-	fmt.Printf("Part 2: %d\n", result)
+	for k, v := range c2 {
+		if val, ok := out[k]; !ok {
+			out[k] = v
+		} else {
+			out[k] = val + v
+		}
+	}
+	out[common] -= 1
+	return out
 }
 
 func main() {
