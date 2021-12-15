@@ -1,4 +1,4 @@
-package main
+package day3
 
 import (
 	"advent-calendar/utils"
@@ -57,7 +57,7 @@ func (d *Day) RunPart2() {
 	// parse stings as base 2
 	ob2, _ := strconv.ParseInt(oxygenString, 2, 0)
 	cb2, _ := strconv.ParseInt(co2String, 2, 0)
-	fmt.Printf("Part 2: %d", ob2*cb2)
+	fmt.Printf("Part 2: %d\n", ob2*cb2)
 }
 
 func (d *Day) getCo2() []int {

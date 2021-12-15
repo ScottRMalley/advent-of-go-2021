@@ -1,4 +1,4 @@
-package main
+package day13
 
 import (
 	"advent-calendar/utils"
@@ -81,11 +81,6 @@ func (d *Day) fold() {
 	var newPoints [][]int
 
 	if nextFold[0] == 0 {
-		/*		firstHalfSize := foldLine
-				secondHalfSize := maxX + 1 - foldLine - 1
-				fmt.Printf("First half size: %d\n", firstHalfSize)
-				fmt.Printf("Second hald size: %d\n\n", secondHalfSize)*/
-
 		for _, point := range d.data.Points {
 			if point[0] > foldLine {
 				newPoints = append(newPoints, []int{
@@ -100,8 +95,6 @@ func (d *Day) fold() {
 		// fold along y
 		firstHalfSize := foldLine
 		secondHalfSize := maxY - foldLine
-		fmt.Printf("First half size: %d\n", firstHalfSize)
-		fmt.Printf("Second half size: %d\n\n", secondHalfSize)
 
 		if firstHalfSize != secondHalfSize {
 			maxY += firstHalfSize - secondHalfSize

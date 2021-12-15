@@ -1,4 +1,4 @@
-package main
+package day1
 
 import (
 	"fmt"
@@ -42,7 +42,7 @@ func (d *Day) RunPart1() {
 			increased += 1
 		}
 	}
-	fmt.Println(increased)
+	fmt.Printf("Part 1: %d\n", increased)
 }
 
 func (d *Day) RunPart2() {
@@ -56,7 +56,7 @@ func (d *Day) RunPart2() {
 			increased += 1
 		}
 	}
-	fmt.Println(increased)
+	fmt.Printf("Part 2: %d\n", increased)
 
 }
 

@@ -1,4 +1,4 @@
-package main
+package day4
 
 import (
 	"advent-calendar/utils"
@@ -14,6 +14,8 @@ type Board [][]int
 type Day struct {
 	seq  []int
 	data Data
+	lastChoice,
+	lastSum int
 }
 
 func loadData(fname string) ([]int, Data) {
@@ -46,8 +48,8 @@ func NewDay(fname string) *Day {
 
 func (d *Day) RunPart1() {
 	choice, sum, lastChoice, lastSum := d.applySeq()
+	d.lastChoice, d.lastSum = lastChoice, lastSum
 	fmt.Printf("Part 1: %d\n", choice*sum)
-	fmt.Printf("Part 2: %d\n", lastChoice*lastSum)
 }
 
 func (d *Day) applySeq() (int, int, int, int) {
@@ -119,6 +121,7 @@ func (d *Day) sumBoard(board Board) int {
 
 
 func (d *Day) RunPart2() {
+	fmt.Printf("Part 2: %d\n", d.lastChoice*d.lastSum)
 }
 
 func main() {
