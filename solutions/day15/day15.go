@@ -44,26 +44,26 @@ func (c cell) Swap(i, j int) {
 
 func shortest(grid [][]int) int {
 	maxX, maxY := len(grid), len(grid[0])
-	dis := utils.Zeros2D(maxX, maxY)
-	for i := range dis {
-		for j := range dis[0] {
-			dis[i][j] = 100000000000000000
+	weights := utils.Zeros2D(maxX, maxY)
+	for i := range weights {
+		for j := range weights[0] {
+			weights[i][j] = int(^uint(0) >> 1)
 		}
 	}
 
-	st := [][]int{{0, 0, 0}}
-	dis[0][0] = grid[0][0]
+	toVisit := [][]int{{0, 0, 0}}
+	weights[0][0] = 0
 
 	inGrid := func(i, j int) bool {
 		return i >= 0 && i < maxX && j >= 0 && j < maxY
 	}
 
 	for {
-		if len(st) == 0 {
+		if len(toVisit) == 0 {
 			break
 		}
-		k := st[0]
-		st = st[1:]
+		k := toVisit[0]
+		toVisit = toVisit[1:]
 
 		options := [][]int{{0, 1}, {1, 0}, {0, -1}, {-1, 0}}
 		for i := range options {
@@ -72,26 +72,26 @@ func shortest(grid [][]int) int {
 			if !inGrid(x, y) {
 				continue
 			}
-			if dis[x][y] > dis[k[0]][k[1]]+grid[x][y] {
-				dis[x][y] = dis[k[0]][k[1]] + grid[x][y]
-				st = append(st, []int{x, y, dis[x][y]})
+			if weights[x][y] > weights[k[0]][k[1]]+grid[x][y] {
+				weights[x][y] = weights[k[0]][k[1]] + grid[x][y]
+				toVisit = append(toVisit, []int{x, y, weights[x][y]})
 			}
 		}
-		sort.Sort(cell(st))
+		sort.Sort(cell(toVisit))
 	}
-	return dis[maxX-1][maxY-1]
+	return weights[maxX-1][maxY-1]
 }
 
 func (d *Day) RunPart1() {
-	min := shortest(d.data) - d.data[0][0]
+	min := shortest(d.data)
 	fmt.Printf("Part 1: %d\n", min)
 }
 
-func wrap(val, i, j int) int {
-	if val+i+j < 10 {
-		return val + i + j
+func wrap(val, increment int) int {
+	if val+increment < 10 {
+		return val + increment
 	}
-	return 1 + ((val + i + j) % 10)
+	return 1 + ((val + increment) % 10)
 }
 
 func (d *Day) RunPart2() {
@@ -101,11 +101,11 @@ func (d *Day) RunPart2() {
 		for j := 0; j < 5; j++ {
 			for k := range d.data {
 				for l := range d.data {
-					grid[maxX*i+k][maxY*j+l] = wrap(d.data[k][l], i, j)
+					grid[maxX*i+k][maxY*j+l] = wrap(d.data[k][l], i+j)
 				}
 			}
 		}
 	}
-	min := shortest(grid) - grid[0][0]
+	min := shortest(grid)
 	fmt.Printf("Part 2: %d\n", min)
 }
