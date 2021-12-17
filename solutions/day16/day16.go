@@ -63,18 +63,11 @@ func NewDay(fname string) *Day {
 }
 
 func decodeBit(hex string) string {
-	out := ""
+	bitString := ""
 	for _, char := range hex {
-		out += getHexMap()[string(char)]
+		bitString += getHexMap()[string(char)]
 	}
-	return out
-}
-
-func getVersion(binString string) (int, string) {
-	versionString, left := binString[0:3], binString[3:]
-	version, err := strconv.ParseInt(versionString, 2, 64)
-	utils.Check(err)
-	return int(version), left
+	return bitString
 }
 
 func parseBinaryInt(bitString string) int {
@@ -83,108 +76,103 @@ func parseBinaryInt(bitString string) int {
 	return int(num)
 }
 
-func getTypeId(binString string) (int, string) {
-	typeString, left := binString[0:3], binString[3:]
-	typeNum, err := strconv.ParseInt(typeString, 2, 64)
-	utils.Check(err)
-	return int(typeNum), left
+func getVersion(bitString string) (int, string) {
+	versionString, left := bitString[0:3], bitString[3:]
+	return parseBinaryInt(versionString), left
 }
 
-func parseLiteral(binString string) (int, string) {
+func getTypeId(bitString string) (int, string) {
+	typeString, left := bitString[0:3], bitString[3:]
+	return parseBinaryInt(typeString), left
+}
+
+func parseLiteral(bitString string) (int, string) {
 	i := 0
 	literalString := ""
 	done := false
 	for {
-		if done || i >= len(binString) {
+		if done || i >= len(bitString) {
 			break
 		}
-		section := binString[i : i+5]
+		section := bitString[i : i+5]
 		if string(section[0]) == "0" {
 			done = true
 		}
 		literalString += section[1:]
 		i += 5
 	}
-	num, err := strconv.ParseInt(literalString, 2, 64)
-	utils.Check(err)
-	return int(num), binString[i:]
+	return parseBinaryInt(literalString), bitString[i:]
 }
 
 func getLengthTypeId(bitString string) (int, string) {
-	lengthTypeString, out := string(bitString[0]), bitString[1:]
-	lengthType, err := strconv.ParseInt(lengthTypeString, 2, 64)
-	utils.Check(err)
-	return int(lengthType), out
+	return parseBinaryInt(string(bitString[0])), bitString[1:]
 }
 
 func getTotalLengthOfSubpackets(bitString string) (int, string) {
-	totalLength, out := bitString[0:15], bitString[15:]
-	length := parseBinaryInt(totalLength)
-	return length, out
+	return parseBinaryInt(bitString[0:15]), bitString[15:]
 }
 
 func getNumberOfSubpackets(bitString string) (int, string) {
-	numString, out := bitString[0:11], bitString[11:]
-	return parseBinaryInt(numString), out
+	return parseBinaryInt(bitString[0:11]), bitString[11:]
 }
 
 func parseSubpacketByLength(bitString string, length int) ([]Packet, string) {
 	initialLength := len(bitString)
-	out := bitString
+	remainder := bitString
 	var packets []Packet
+	var packet Packet
 	for {
-		nextPacket, nextOut := parsePacket(out)
-		packets = append(packets, nextPacket)
-		out = nextOut
-		if initialLength-len(out) >= length {
-			return packets, out
+		packet, remainder = parsePacket(remainder)
+		packets = append(packets, packet)
+		if initialLength-len(remainder) >= length {
+			return packets, remainder
 		}
 	}
 }
 
 func parseSubpacketByNumber(bitString string, numPackets int) ([]Packet, string) {
 	var packets []Packet
-	out := bitString
+	var packet Packet
+	remainder := bitString
 	for {
-		nextPacket, nextOut := parsePacket(out)
-		packets = append(packets, nextPacket)
-		out = nextOut
+		packet, remainder = parsePacket(remainder)
+		packets = append(packets, packet)
 		if len(packets) >= numPackets {
-			return packets, out
+			return packets, remainder
 		}
 	}
 }
 
 func parseOperator(packet Packet, bitString string) (Packet, string) {
-	out := bitString
-	lengthType, out := getLengthTypeId(out)
+	remainder := bitString
+	lengthType, remainder := getLengthTypeId(remainder)
 	if lengthType == 0 {
-		totalLength, out := getTotalLengthOfSubpackets(out)
+		totalLength, remainder := getTotalLengthOfSubpackets(remainder)
 		packet.OperatorLength = OperatorLength{
 			LengthTypeId: lengthType,
 			Length:       totalLength,
 		}
-		subPackets, out := parseSubpacketByLength(out, totalLength)
+		subPackets, remainder := parseSubpacketByLength(remainder, totalLength)
 		packet.SubPackets = subPackets
-		return packet, out
+		return packet, remainder
 	} else {
-		packetLength, out := getNumberOfSubpackets(out)
+		packetLength, remainder := getNumberOfSubpackets(remainder)
 		packet.OperatorLength = OperatorLength{
 			LengthTypeId: lengthType,
 			Length:       packetLength,
 		}
-		subPackets, out := parseSubpacketByNumber(out, packetLength)
+		subPackets, remainder := parseSubpacketByNumber(remainder, packetLength)
 		packet.SubPackets = subPackets
-		return packet, out
+		return packet, remainder
 	}
 }
 
 func parsePacket(bitString string) (Packet, string) {
 	packet := Packet{}
-	out := bitString
+	remainder := bitString
 	// get header
-	version, out := getVersion(out)
-	typeId, out := getTypeId(out)
+	version, remainder := getVersion(remainder)
+	typeId, remainder := getTypeId(remainder)
 
 	packet.Header = Header{
 		Version: version,
@@ -192,25 +180,12 @@ func parsePacket(bitString string) (Packet, string) {
 	}
 
 	if typeId == 4 {
-		literal, nextOut := parseLiteral(out)
+		literal, out := parseLiteral(remainder)
 		packet.Literal = literal
-		return packet, nextOut
+		return packet, out
 	} else {
-		packet, nextOut := parseOperator(packet, out)
-		return packet, nextOut
-	}
-}
-
-func printPacket(packet Packet) {
-	fmt.Println("---header---")
-	fmt.Printf("version: %d typeId: %d\n", packet.Header.Version, packet.Header.TypeId)
-	if packet.Header.TypeId == 4 {
-		fmt.Printf("literal: %d\n", packet.Literal)
-	} else {
-		fmt.Println("---subpackets---")
-		for _, subpacket := range packet.SubPackets {
-			printPacket(subpacket)
-		}
+		packet, remainder = parseOperator(packet, remainder)
+		return packet, remainder
 	}
 }
 
@@ -289,15 +264,15 @@ func executeOperations(packet Packet) int {
 }
 
 func (d *Day) RunPart1() {
-	out := decodeBit(string(d.data))
-	packet, _ := parsePacket(out)
+	bitString := decodeBit(string(d.data))
+	packet, _ := parsePacket(bitString)
 	sum := countVersions(packet)
 	fmt.Printf("Part 1: %d\n", sum)
 }
 
 func (d *Day) RunPart2() {
-	out := decodeBit(string(d.data))
-	packet, _ := parsePacket(out)
+	bitString := decodeBit(string(d.data))
+	packet, _ := parsePacket(bitString)
 	result := executeOperations(packet)
 	fmt.Printf("Part 2: %d\n", result)
 }
