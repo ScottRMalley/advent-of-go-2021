@@ -11,7 +11,12 @@ import (
 	"advent-calendar/solutions/day16"
 	"advent-calendar/solutions/day17"
 	"advent-calendar/solutions/day18"
+	"advent-calendar/solutions/day19"
 	"advent-calendar/solutions/day2"
+	"advent-calendar/solutions/day20"
+	"advent-calendar/solutions/day21"
+	"advent-calendar/solutions/day22"
+	"advent-calendar/solutions/day23"
 	"advent-calendar/solutions/day3"
 	"advent-calendar/solutions/day4"
 	"advent-calendar/solutions/day5"
@@ -50,6 +55,11 @@ var days = map[int]DayMaker{
 	16: func(s string) Day { return day16.NewDay(s) },
 	17: func(s string) Day { return day17.NewDay(s) },
 	18: func(s string) Day { return day18.NewDay(s) },
+	19: func(s string) Day { return day19.NewDay(s) },
+	20: func(s string) Day { return day20.NewDay(s) },
+	21: func(s string) Day { return day21.NewDay(s) },
+	22: func(s string) Day { return day22.NewDay(s) },
+	23: func(s string) Day { return day23.NewDay(s) },
 }
 
 func runDay(i int, useTestData bool) {

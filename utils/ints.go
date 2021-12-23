@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"math"
 	"sort"
 	"strconv"
 	"strings"
@@ -203,4 +204,18 @@ func AllValuesLessThan(a [][]int, v int) bool {
 		}
 	}
 	return true
+}
+
+func PowInt(x, y int) int {
+	return int(math.Pow(float64(x), float64(y)))
+}
+
+func Round(x float64) int {
+	return int(math.Round(x))
+}
+
+func ParseBinaryInt(bitString string) int {
+	num, err := strconv.ParseInt(bitString, 2, 64)
+	Check(err)
+	return int(num)
 }
